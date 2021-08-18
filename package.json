@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn clean && yarn compile",
-    "clean": "rimraf ./dist/*",
+    "clean": "touch ./dist/tmp && rimraf ./dist/*",
     "compile": "tsc"
   },
   "peerDependencies": {
