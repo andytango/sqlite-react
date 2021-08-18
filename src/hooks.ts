@@ -1,7 +1,7 @@
-import { map } from "ramda";
+import { last, pipe } from "ramda";
 import { useCallback, useState } from "react";
-import { DbResult, DbInstanceGetter, DbQueryFormatter } from "./types";
 import { mapResultToObjects } from "./helpers";
+import { DbInstanceGetter, DbQueryFormatter, DbResult } from "./types";
 
 interface QueryState<T> {
   loading: boolean;
@@ -48,7 +48,7 @@ async function performQuery<T>(
   const res = await dbExec(formatter(...args));
   const { results } = res;
 
-  if (results) {
+  if (results && results.length > 0) {
     setState({
       results: processResults(results),
       loading: false,
@@ -61,4 +61,6 @@ async function performQuery<T>(
   }
 }
 
-const processResults = map(mapResultToObjects) as <T>(a: DbResult[]) => T[];
+const processResults = pipe(last, mapResultToObjects) as <T>(
+  a: DbResult[]
+) => T[];
