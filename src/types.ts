@@ -20,3 +20,12 @@ export type DbExec = (sql: string) => Promise<DbResponse>;
 export type DbWorker = Worker;
 
 export type DbQueryFormatter = (...a: any[]) => string;
+
+export interface DbQueryState<T> {
+  loading: boolean;
+  results: T[];
+}
+
+export type SetDbQueryState<T> = React.Dispatch<
+  React.SetStateAction<DbQueryState<T>>
+>;

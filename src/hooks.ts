@@ -1,14 +1,13 @@
 import { last, pipe } from "ramda";
 import { useCallback, useState } from "react";
 import { mapResultToObjects } from "./helpers";
-import { DbInstanceGetter, DbQueryFormatter, DbResult } from "./types";
-
-interface QueryState<T> {
-  loading: boolean;
-  results: T[];
-}
-
-type SetQueryState<T> = React.Dispatch<React.SetStateAction<QueryState<T>>>;
+import {
+  DbInstanceGetter,
+  DbQueryFormatter,
+  DbResult,
+  DbQueryState,
+  SetDbQueryState,
+} from "./types";
 
 type Parameters<T> = T extends (...args: infer T) => any ? T : never;
 
@@ -20,7 +19,7 @@ const initialState = {
 export function makeDbQueryFactory(getDbInstance: DbInstanceGetter) {
   return function makeDbQuery<T>(formatter: DbQueryFormatter) {
     return () => {
-      const [state, setState] = useState(initialState as QueryState<T>);
+      const [state, setState] = useState(initialState as DbQueryState<T>);
       const execQuery = useCallback(
         (...args: Parameters<typeof formatter>) => {
           setState({ loading: true, results: [] });
@@ -29,14 +28,14 @@ export function makeDbQueryFactory(getDbInstance: DbInstanceGetter) {
         [state, setState]
       ) as (...args: Parameters<typeof formatter>) => void;
 
-      return [state, execQuery] as [QueryState<T>, typeof execQuery];
+      return [state, execQuery] as [DbQueryState<T>, typeof execQuery];
     };
   };
 }
 
 interface QueryParams<T> {
   formatter: DbQueryFormatter;
-  setState: SetQueryState<T>;
+  setState: SetDbQueryState<T>;
   getDbInstance: DbInstanceGetter;
 }
 
