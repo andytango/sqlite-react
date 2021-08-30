@@ -1,6 +1,6 @@
 {
   "name": "sqlite-react",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Simple react wrapper for sqlite-js",
   "main": "dist/index.js",
   "author": "andytango",
