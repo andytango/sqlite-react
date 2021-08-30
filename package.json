@@ -11,7 +11,7 @@
     "compile": "tsc"
   },
   "peerDependencies": {
-    "react": "^17.0.2",
+    "react": ">16",
     "sql.js": "^1.6.1"
   },
   "devDependencies": {
