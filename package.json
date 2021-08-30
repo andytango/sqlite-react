@@ -1,6 +1,6 @@
 {
   "name": "sqlite-react",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Simple react wrapper for sqlite-js",
   "main": "dist/index.js",
   "author": "andytango",
@@ -11,7 +11,7 @@
     "compile": "tsc"
   },
   "peerDependencies": {
-    "react": ">16",
+    "react": ">15",
     "sql.js": "^1.6.1"
   },
   "devDependencies": {
