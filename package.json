@@ -8,18 +8,25 @@
   "scripts": {
     "build": "yarn clean && yarn compile",
     "clean": "touch ./dist/tmp && rimraf ./dist/*",
-    "compile": "tsc"
+    "compile": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "peerDependencies": {
     "react": ">15",
     "sql.js": "^1.6.1"
   },
   "devDependencies": {
-    "@andytango/ts-event-emitter": "1.0.3",
+    "@andytango/ts-event-emitter": "1.0.4",
+    "@babel/preset-env": "^7.15.6",
+    "@types/jest": "^27.0.2",
     "@types/ramda": "^0.27.44",
     "@types/react": "^17.0.18",
+    "jest": "^27.2.2",
+    "jest-extended": "^0.11.5",
     "prettier": "^2.3.2",
     "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.5",
     "typescript": "^4.3.5"
   },
   "dependencies": {
