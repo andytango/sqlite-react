@@ -1,6 +1,7 @@
 export interface DbOpts {
   sqlDataUrl: string;
   sqlJsWorkerPath: string;
+  worker?: Worker;
 }
 
 export type DbInstanceGetter = () => Promise<DbExec>;

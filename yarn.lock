@@ -5512,9 +5512,9 @@ fsevents@^2.3.2:
     rimraf: ^3.0.2
     ts-jest: ^27.0.5
     typescript: ^4.3.5
+    web-worker: ^1.1.0
   peerDependencies:
     react: ">15"
-    sql.js: ^1.6.1
   languageName: unknown
   linkType: soft
 
@@ -6031,6 +6031,13 @@ typescript@^4.3.5:
   dependencies:
     makeerror: 1.0.x
   checksum: 4038fcf92f6ab0288267ad05008aec9e089a759f1bd32e1ea45cc2eb498eb12095ec43cf8ca2bf23a465f4580a0d33b25b89f450ba521dd27083cbc695ee6bf5
+  languageName: node
+  linkType: hard
+
+"web-worker@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "web-worker@npm:1.1.0"
+  checksum: fd00659bb2d602748242378e9f965aa494aec28e94b14d6a9d640578c15fcac8137b1f63995e6ed35f39db7c3ffec87d26d0355123f1433b0fbf7707ba767c0f
   languageName: node
   linkType: hard
 
