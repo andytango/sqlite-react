@@ -29,3 +29,32 @@ export interface DbQueryState<T> {
 export type SetDbQueryState<T> = React.Dispatch<
   React.SetStateAction<DbQueryState<T>>
 >;
+
+export interface DbEvent extends DbOpts {}
+
+interface QueryEvent extends DbOpts {
+  queryId: string;
+  sql: string;
+}
+
+export interface QueryStartEvent extends QueryEvent {
+  startedAt: number;
+}
+
+export interface QueryResultEvent extends QueryEvent {
+  results: DbResult[];
+  completedAt: number;
+}
+
+export interface QueryErrorEvent extends QueryEvent {
+  error: string;
+  completedAt: number;
+}
+
+export type DbEventMap = {
+  dbInit: DbEvent;
+  dbReady: DbEvent;
+  queryStart: QueryStartEvent;
+  queryResult: QueryResultEvent;
+  queryError: QueryErrorEvent;
+};

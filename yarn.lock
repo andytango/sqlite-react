@@ -5,6 +5,13 @@ __metadata:
   version: 4
   cacheKey: 8
 
+"@andytango/ts-event-emitter@npm:1.0.3":
+  version: 1.0.3
+  resolution: "@andytango/ts-event-emitter@npm:1.0.3"
+  checksum: 80377df9c7cad0038cf4be7bc38510f89cd585b3808b9e92e63e836d1a2d7d3c364bf7579785177705eb509c79d950d61915a2ee50b6ccbddfb5faaf076a3481
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:*":
   version: 15.7.4
   resolution: "@types/prop-types@npm:15.7.4"
@@ -164,6 +171,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "sqlite-react@workspace:."
   dependencies:
+    "@andytango/ts-event-emitter": 1.0.3
     "@types/ramda": ^0.27.44
     "@types/react": ^17.0.18
     prettier: ^2.3.2
@@ -171,7 +179,7 @@ __metadata:
     rimraf: ^3.0.2
     typescript: ^4.3.5
   peerDependencies:
-    react: ^17.0.2
+    react: ">15"
     sql.js: ^1.6.1
   languageName: unknown
   linkType: soft
