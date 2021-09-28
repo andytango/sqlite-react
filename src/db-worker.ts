@@ -1,18 +1,25 @@
 import { DbOpts } from "./types";
 import Worker from "web-worker";
+import { DbResponse, DbResult } from ".";
 
-export async function createDbWorker(opts: DbOpts) {
+export type DbWorker = ReturnType<typeof createDbWorker>;
+
+export function createDbWorker(opts: DbOpts) {
   const worker = initWebWorker(opts);
 
-  function exec(action: string, payload = {}) {
-    return execWorker(worker, action, payload);
+  function exec(sql: string) {
+    return performAction(worker, "exec", { sql });
+  }
+
+  function open(buffer: ArrayBuffer) {
+    return performAction(worker, "open", { buffer });
   }
 
   function terminate() {
     worker.terminate();
   }
 
-  return { exec, terminate };
+  return { exec, terminate, open };
 }
 
 function initWebWorker(opts: DbOpts) {
@@ -23,19 +30,14 @@ function initWebWorker(opts: DbOpts) {
 }
 
 function addEventListeners(worker: Worker) {
-  worker.addEventListener("message", handleMessage);
   worker.addEventListener("error", handleError);
 }
 
-function handleMessage(e: MessageEvent) {
-  console.debug("[DB-WORKER]", e.data);
-}
-
 function handleError(e: ErrorEvent) {
-  console.error("[DB-WORKER]", e.error);
+  console.error("[DB-WORKER] Error:", e.error);
 }
 
-function execWorker(worker: Worker, action: string, payload: {}) {
+function performAction(worker: Worker, action: string, payload: {}) {
   const id = getNewMessageId();
   const message = { id, action, ...payload };
 
@@ -54,11 +56,11 @@ function execWorker(worker: Worker, action: string, payload: {}) {
     }),
     new Promise<void>((res) => {
       setTimeout(() => {
-        console.error(`DB Message Timeout`, message);
+        console.error(`[DB-WORKER] Message timeout`, message);
         res();
-      }, 1e3);
+      }, 3e3);
     }),
-  ]);
+  ]) as Promise<DbResponse>;
 }
 
 let messageId = 0;

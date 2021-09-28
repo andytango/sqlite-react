@@ -8,54 +8,80 @@ const opts: DbOpts = {
 };
 
 describe("createDbWorker", () => {
-  it("accepts db options and returns a promise", async () => {
-    const worker = createDbWorker(opts);
-    expect(worker).toBeInstanceOf(Promise);
-    (await worker).terminate();
-  });
-
   it("adds event listeners to the worker", async () => {
-    const worker = new Worker(opts.sqlJsWorkerPath);
-    const fn = jest.spyOn(worker, "addEventListener");
+    const webWorker = new Worker(opts.sqlJsWorkerPath);
+    const fn = jest.spyOn(webWorker, "addEventListener");
 
-    await createDbWorker({ ...opts, worker });
+    createDbWorker({ ...opts, worker: webWorker });
 
-    expect(fn).toHaveBeenCalledWith("message", expect.any(Function));
     expect(fn).toHaveBeenCalledWith("error", expect.any(Function));
 
-    worker.terminate();
+    webWorker.terminate();
   });
 
   it("terminates", async () => {
-    const worker = new Worker(opts.sqlJsWorkerPath);
-    const fn = jest.spyOn(worker, "terminate");
+    const webWorker = new Worker(opts.sqlJsWorkerPath);
+    const fn = jest.spyOn(webWorker, "terminate");
 
-    await createDbWorker({ ...opts, worker });
-    worker.terminate();
+    createDbWorker({ ...opts, worker: webWorker });
+    webWorker.terminate();
     expect(fn).toHaveBeenCalled();
   });
 
-  it("calls post message on exec", async () => {
+  it("executes sql via worker", async () => {
     const worker = new Worker(opts.sqlJsWorkerPath);
     const fn1 = jest.spyOn(worker, "postMessage");
     const fn2 = jest.spyOn(worker, "addEventListener");
 
-    const dbWorker = await createDbWorker({ ...opts, worker });
-    const res = await dbWorker.exec("exec", { k: "v" });
+    const dbWorker = createDbWorker({ ...opts, worker });
+    const res = await dbWorker.exec("select 1 as val");
 
     expect(fn1).toHaveBeenCalledWith({
       id: expect.any(Number),
       action: "exec",
-      k: "v",
+      sql: "select 1 as val",
     });
 
     expect(fn2).toHaveBeenCalledWith("message", expect.any(Function));
 
-    expect(res).toEqual({
+    expect(res).toMatchInlineSnapshot(`
+Object {
+  "id": 0,
+  "results": Array [
+    Object {
+      "columns": Array [
+        "val",
+      ],
+      "values": Array [
+        Array [
+          1,
+        ],
+      ],
+    },
+  ],
+}
+`);
+
+    dbWorker.terminate();
+  });
+
+  it("opens sqlite file via worker", async () => {
+    const worker = new Worker(opts.sqlJsWorkerPath);
+    const fn1 = jest.spyOn(worker, "postMessage");
+    const fn2 = jest.spyOn(worker, "addEventListener");
+
+    const dbWorker = createDbWorker({ ...opts, worker });
+    const res = await dbWorker.open(new ArrayBuffer(1));
+
+    expect(fn1).toHaveBeenCalledWith({
       id: expect.any(Number),
-      action: "exec",
-      k: "v",
+      action: "open",
+      buffer: expect.any(ArrayBuffer),
     });
+
+    expect(fn2).toHaveBeenCalledWith("message", expect.any(Function));
+
+    expect(res).toEqual({ id: expect.any(Number) });
 
     dbWorker.terminate();
   });
