@@ -1,13 +1,13 @@
-import { DbInstanceGetter } from ".";
+import { DbInstanceGetter, DbResponse, QueryErrorEvent } from ".";
 import { createDbEventEmitter, DbEventEmitter } from "./db-event-emitter";
 import { createDbWorker, DbWorker } from "./db-worker";
 import { DbExec, DbOpts } from "./types";
 
-interface DbManager extends DbWorker, DbEventEmitter {
+interface DbManager extends DbEventEmitter {
   getInstance: DbInstanceGetter;
 }
 
-interface DbManagerContext extends DbOpts {
+interface Context extends DbOpts {
   dbWorker: DbWorker;
   emitter: DbEventEmitter;
   dbInstance: DbExec | null;
@@ -19,15 +19,21 @@ interface DbManagerContext extends DbOpts {
 export function createDbManager(opts: DbOpts): DbManager {
   const context = createInitialState(opts);
   const { dbWorker, emitter } = context;
+  let queryIdSec = 0;
 
   function getInstance() {
     return getDbInstance(context);
   }
 
-  return { ...dbWorker, ...emitter, getInstance };
+  function exec(sql: string) {
+    console.log("exec");
+    return execQuery(context, sql, queryIdSec++);
+  }
+
+  return { ...emitter, getInstance };
 }
 
-function createInitialState(opts: DbOpts): DbManagerContext {
+function createInitialState(opts: DbOpts): Context {
   const dbWorker = createDbWorker(opts);
   const emitter = createDbEventEmitter();
   const { getDbFile = fetchDbFile } = opts;
@@ -48,7 +54,7 @@ async function fetchDbFile(url: string) {
   return res.arrayBuffer();
 }
 
-function getDbInstance(context: DbManagerContext) {
+function getDbInstance(context: Context) {
   const { dbInstance, isDbInitialising } = context;
 
   if (dbInstance) {
@@ -62,42 +68,42 @@ function getDbInstance(context: DbManagerContext) {
   return initDb(context);
 }
 
-function enqueueDbInitCallback(context: DbManagerContext) {
+function enqueueDbInitCallback(context: Context) {
   return (res: (dbExec: DbExec) => void) =>
     context.onInitialised.push((dbExec) => res(dbExec));
 }
 
-async function initDb(context: DbManagerContext): Promise<DbExec> {
+async function initDb(context: Context): Promise<DbExec> {
   setDbInitialising(context);
   await loadSqliteFile(context);
   setDbReady(context);
   return setupDbExec(context);
 }
 
-function setDbInitialising(context: DbManagerContext) {
+function setDbInitialising(context: Context) {
   const { emitter, sqlDataUrl, sqlJsWorkerPath } = context;
   context.isDbInitialising = true;
   emitter.emit("dbInit", { sqlDataUrl, sqlJsWorkerPath });
 }
 
-function execDbInitCallbacks(context: DbManagerContext, exec: DbExec) {
+function execDbInitCallbacks(context: Context, exec: DbExec) {
   context.onInitialised.forEach((fn) => fn(exec));
   context.onInitialised = [];
 }
 
-async function loadSqliteFile(context: DbManagerContext) {
+async function loadSqliteFile(context: Context) {
   const { dbWorker, sqlDataUrl, getDbFile } = context;
   const sqlFile: ArrayBuffer = await getDbFile(sqlDataUrl);
   await dbWorker.open(sqlFile);
 }
 
-function setDbReady(context: DbManagerContext) {
+function setDbReady(context: Context) {
   const { emitter, sqlDataUrl, sqlJsWorkerPath } = context;
   context.isDbInitialising = false;
   emitter.emit("dbReady", { sqlDataUrl, sqlJsWorkerPath });
 }
 
-function setupDbExec(context: DbManagerContext) {
+function setupDbExec(context: Context) {
   const { dbWorker } = context;
   const exec = createDbExec(dbWorker);
 
@@ -111,5 +117,66 @@ function createDbExec(worker: DbWorker) {
   return async (sql: string) => {
     const { error, results } = await worker.exec(sql);
     return { error, results };
+  };
+}
+
+async function execQuery(context: Context, sql: string, queryId: number) {
+  const db = await getDbInstance(context);
+  const startedAt = performance.now();
+
+  emitQueryStartEvent(context, sql, queryId, startedAt);
+  const res = await db(sql);
+  emitQueryCompleteEvents(context, sql, queryId, startedAt, res);
+
+  return res;
+}
+
+function emitQueryStartEvent(
+  context: Context,
+  sql: string,
+  queryId: number,
+  startedAt: number
+) {
+  const { emitter, sqlDataUrl, sqlJsWorkerPath, dbWorker } = context;
+  emitter.emit<"queryStart">("queryStart", {
+    sqlDataUrl,
+    sqlJsWorkerPath,
+    queryId: queryId.toString(),
+    sql,
+    startedAt,
+  });
+}
+
+function emitQueryCompleteEvents(
+  context: Context,
+  sql: string,
+  queryId: number,
+  startedAt: number,
+  res: DbResponse
+) {
+  const { emitter } = context;
+  const { error, results } = res;
+  const base = getQueryCompleteEventBase(context, queryId, sql, startedAt);
+
+  if (error) {
+    emitter.emit<"queryError">("queryError", { ...base, error });
+  } else if (results) {
+    emitter.emit<"queryResult">("queryResult", { ...base, results });
+  }
+}
+function getQueryCompleteEventBase(
+  context: Context,
+  queryId: number,
+  sql: string,
+  startedAt: number
+) {
+  const { sqlDataUrl, sqlJsWorkerPath } = context;
+  return {
+    sqlDataUrl,
+    sqlJsWorkerPath,
+    queryId: queryId.toString(),
+    sql,
+    startedAt,
+    completedAt: performance.now(),
   };
 }

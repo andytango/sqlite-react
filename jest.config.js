@@ -4,5 +4,5 @@ module.exports = {
   testEnvironment: "node",
   setupFilesAfterEnv: ["jest-extended"],
   modulePathIgnorePatterns: ["/dist"],
-  silent: true,
+  // silent: true,
 };

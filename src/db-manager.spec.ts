@@ -74,9 +74,17 @@ describe("createDbManager", () => {
   it("execs queries", async () => {
     const dbManager = createDbManager(opts);
     const db = await dbManager.getInstance();
+    const fn1 = jest.fn();
+    const fn2 = jest.fn();
+
+    dbManager.once("queryStart", fn1);
+    dbManager.once("queryResult", fn2);
+
     const res = await db(`select 1 as val`);
 
     expect(res).toMatchSnapshot();
+    expect(fn1).toHaveBeenCalledWith({});
+    expect(fn2).toHaveBeenCalledWith({});
 
     dbManager.terminate();
   });

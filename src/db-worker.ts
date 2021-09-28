@@ -1,6 +1,6 @@
-import { DbOpts } from "./types";
 import Worker from "web-worker";
-import { DbResponse, DbResult } from ".";
+import { DbResponse } from ".";
+import { DbOpts } from "./types";
 
 export type DbWorker = ReturnType<typeof createDbWorker>;
 
@@ -54,10 +54,10 @@ function performAction(worker: Worker, action: string, payload: {}) {
 
       worker.addEventListener("message", handleResponse);
     }),
-    new Promise<void>((res) => {
+    new Promise<void>((_, rej) => {
       setTimeout(() => {
         console.error(`[DB-WORKER] Message timeout`, message);
-        res();
+        rej();
       }, 3e3);
     }),
   ]) as Promise<DbResponse>;

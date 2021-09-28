@@ -45,11 +45,13 @@ export interface QueryStartEvent extends QueryEvent {
 
 export interface QueryResultEvent extends QueryEvent {
   results: DbResult[];
+  startedAt: number;
   completedAt: number;
 }
 
 export interface QueryErrorEvent extends QueryEvent {
   error: string;
+  startedAt: number;
   completedAt: number;
 }
 
