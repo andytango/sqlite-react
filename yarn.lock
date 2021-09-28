@@ -5515,6 +5515,7 @@ fsevents@^2.3.2:
     web-worker: ^1.1.0
   peerDependencies:
     react: ">15"
+    sql.js: ^1.6.1
   languageName: unknown
   linkType: soft
 
