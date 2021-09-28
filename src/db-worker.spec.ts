@@ -44,23 +44,7 @@ describe("createDbWorker", () => {
 
     expect(fn2).toHaveBeenCalledWith("message", expect.any(Function));
 
-    expect(res).toMatchInlineSnapshot(`
-Object {
-  "id": 0,
-  "results": Array [
-    Object {
-      "columns": Array [
-        "val",
-      ],
-      "values": Array [
-        Array [
-          1,
-        ],
-      ],
-    },
-  ],
-}
-`);
+    expect(res).toMatchSnapshot();
 
     dbWorker.terminate();
   });
