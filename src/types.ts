@@ -2,6 +2,7 @@ export interface DbOpts {
   sqlDataUrl: string;
   sqlJsWorkerPath: string;
   worker?: Worker;
+  getDbFile?: (s: string) => Promise<ArrayBuffer>;
 }
 
 export type DbInstanceGetter = () => Promise<DbExec>;
