@@ -1,7 +1,6 @@
 import "jest-extended";
-import { DbOpts } from "./types";
 import { createDbManager } from "./db-manager";
-import { readFileSync } from "fs";
+import { DbOpts } from "./types";
 
 const opts: DbOpts = {
   sqlDataUrl: "src/test-db.sqlite",
@@ -21,7 +20,7 @@ describe("createDbManager", () => {
 
     dbManager.once("dbInit", fn1);
     dbManager.once("dbReady", fn2);
-    await dbManager.getInstance();
+    await dbManager.init();
 
     expect(fn1).toHaveBeenCalled();
     expect(fn2).toHaveBeenCalled();
@@ -39,7 +38,7 @@ describe("createDbManager", () => {
 
     dbManager.once("dbInit", fn1);
     dbManager.once("dbReady", fn2);
-    await dbManager.getInstance();
+    await dbManager.init();
     fn3();
 
     expect(fn1).toHaveBeenCalledBefore(fn3);
@@ -59,9 +58,9 @@ describe("createDbManager", () => {
     dbManager.once("dbReady", fn2);
 
     await Promise.all([
-      dbManager.getInstance(),
-      dbManager.getInstance().then(fn3),
-      dbManager.getInstance().then(fn4),
+      dbManager.init(),
+      dbManager.exec("select example_col from example_table").then(fn3),
+      dbManager.exec("select example_col from example_table").then(fn4),
     ]);
 
     expect(fn1).toHaveBeenCalledBefore(fn2);
@@ -73,26 +72,39 @@ describe("createDbManager", () => {
 
   it("execs queries", async () => {
     const dbManager = createDbManager(opts);
-    const db = await dbManager.getInstance();
     const fn1 = jest.fn();
     const fn2 = jest.fn();
 
     dbManager.once("queryStart", fn1);
     dbManager.once("queryResult", fn2);
 
-    const res = await db(`select 1 as val`);
+    const res = await dbManager.exec(`select 1 as val`);
 
     expect(res).toMatchSnapshot();
-    expect(fn1).toHaveBeenCalledWith({});
-    expect(fn2).toHaveBeenCalledWith({});
+    expect(fn1).toHaveBeenCalledWith({
+      queryId: expect.any(String),
+      sql: expect.any(String),
+      sqlDataUrl: opts.sqlDataUrl,
+      sqlJsWorkerPath: opts.sqlJsWorkerPath,
+      startedAt: expect.any(Number),
+    });
+    expect(fn2).toHaveBeenCalledWith({
+      queryId: expect.any(String),
+      sql: expect.any(String),
+      sqlDataUrl: opts.sqlDataUrl,
+      sqlJsWorkerPath: opts.sqlJsWorkerPath,
+      startedAt: expect.any(Number),
+      completedAt: expect.any(Number),
+      results: [{ columns: ["val"], values: [[1]] }],
+    });
 
     dbManager.terminate();
   });
 
   it("loads the supplied database file url", async () => {
     const dbManager = createDbManager(opts);
-    const db = await dbManager.getInstance();
-    const res = await db(`select example_col from example_table`);
+    await dbManager.init();
+    const res = await dbManager.exec(`select example_col from example_table`);
 
     expect(res).toMatchSnapshot();
 

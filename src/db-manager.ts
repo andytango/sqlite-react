@@ -1,10 +1,11 @@
-import { DbInstanceGetter, DbResponse, QueryErrorEvent } from ".";
 import { createDbEventEmitter, DbEventEmitter } from "./db-event-emitter";
 import { createDbWorker, DbWorker } from "./db-worker";
-import { DbExec, DbOpts } from "./types";
+import { DbExec, DbOpts, DbResponse } from "./types";
 
 interface DbManager extends DbEventEmitter {
-  getInstance: DbInstanceGetter;
+  init: () => Promise<void>;
+  exec: DbExec;
+  terminate: DbWorker["terminate"];
 }
 
 interface Context extends DbOpts {
@@ -13,24 +14,25 @@ interface Context extends DbOpts {
   dbInstance: DbExec | null;
   isDbInitialising: boolean;
   onInitialised: ((dbExec: DbExec) => void)[];
+
   getDbFile: (s: string) => Promise<ArrayBuffer>;
 }
 
 export function createDbManager(opts: DbOpts): DbManager {
   const context = createInitialState(opts);
   const { dbWorker, emitter } = context;
+  const { terminate } = dbWorker;
   let queryIdSec = 0;
 
-  function getInstance() {
-    return getDbInstance(context);
+  async function init() {
+    await getInstance(context);
   }
 
   function exec(sql: string) {
-    console.log("exec");
     return execQuery(context, sql, queryIdSec++);
   }
 
-  return { ...emitter, getInstance };
+  return { ...emitter, init, exec, terminate };
 }
 
 function createInitialState(opts: DbOpts): Context {
@@ -54,7 +56,7 @@ async function fetchDbFile(url: string) {
   return res.arrayBuffer();
 }
 
-function getDbInstance(context: Context) {
+function getInstance(context: Context) {
   const { dbInstance, isDbInitialising } = context;
 
   if (dbInstance) {
@@ -121,7 +123,7 @@ function createDbExec(worker: DbWorker) {
 }
 
 async function execQuery(context: Context, sql: string, queryId: number) {
-  const db = await getDbInstance(context);
+  const db = await getInstance(context);
   const startedAt = performance.now();
 
   emitQueryStartEvent(context, sql, queryId, startedAt);
