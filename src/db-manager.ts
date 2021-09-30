@@ -1,12 +1,6 @@
-import { createDbEventEmitter, DbEventEmitter } from "./db-event-emitter";
+import { createDbEventEmitter } from "./db-event-emitter";
 import { createDbWorker, DbWorker } from "./db-worker";
-import { DbExec, DbOpts, DbResponse } from "./types";
-
-interface DbManager extends DbEventEmitter {
-  init: () => Promise<void>;
-  exec: DbExec;
-  terminate: DbWorker["terminate"];
-}
+import { DbEventEmitter, DbExec, DbManager, DbOpts, DbResponse } from "./types";
 
 interface Context extends DbOpts {
   dbWorker: DbWorker;

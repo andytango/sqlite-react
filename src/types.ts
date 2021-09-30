@@ -1,3 +1,7 @@
+import { EventEmitter } from "@andytango/ts-event-emitter";
+
+export type DbEventEmitter = EventEmitter<DbEventMap>;
+
 export interface DbOpts {
   sqlDataUrl: string;
   sqlJsWorkerPath: string;
@@ -5,7 +9,11 @@ export interface DbOpts {
   getDbFile?: (s: string) => Promise<ArrayBuffer>;
 }
 
-export type DbInstanceGetter = () => Promise<DbExec>;
+export interface DbManager extends DbEventEmitter {
+  init: () => Promise<void>;
+  exec: DbExec;
+  terminate: DbWorker["terminate"];
+}
 
 export interface DbResponse {
   error?: string;
@@ -62,3 +70,41 @@ export type DbEventMap = {
   queryResult: QueryResultEvent;
   queryError: QueryErrorEvent;
 };
+
+export interface DbContextState {
+  db: DbManager;
+  queries: DbQueries;
+  sqlDataUrl: string;
+  sqlJsWorkerPath: string;
+}
+
+export type DbQueries = Record<number, DbQueryState<unknown>>;
+export interface DbQueryState<T> {
+  loading: boolean;
+  results: T[];
+  error?: string;
+  sql: string;
+}
+
+export type DbAction =
+  | {
+      type: "init";
+      db: DbManager;
+      sqlDataUrl: string;
+      sqlJsWorkerPath: string;
+    }
+  | {
+      type: "query_exec";
+      queryId: number;
+      sql: string;
+    }
+  | {
+      type: "query_error";
+      queryId: number;
+      error: string;
+    }
+  | {
+      type: "query_result";
+      queryId: number;
+      results: unknown[];
+    };
