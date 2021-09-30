@@ -14,7 +14,6 @@ interface Context extends DbOpts {
   dbInstance: DbExec | null;
   isDbInitialising: boolean;
   onInitialised: ((dbExec: DbExec) => void)[];
-
   getDbFile: (s: string) => Promise<ArrayBuffer>;
 }
 
@@ -79,13 +78,14 @@ async function initDb(context: Context): Promise<DbExec> {
   setDbInitialising(context);
   await loadSqliteFile(context);
   setDbReady(context);
+
   return setupDbExec(context);
 }
 
 function setDbInitialising(context: Context) {
   const { emitter, sqlDataUrl, sqlJsWorkerPath } = context;
   context.isDbInitialising = true;
-  emitter.emit("dbInit", { sqlDataUrl, sqlJsWorkerPath });
+  emitter.emit<"dbInit">("dbInit", { sqlDataUrl, sqlJsWorkerPath });
 }
 
 function execDbInitCallbacks(context: Context, exec: DbExec) {
@@ -102,7 +102,7 @@ async function loadSqliteFile(context: Context) {
 function setDbReady(context: Context) {
   const { emitter, sqlDataUrl, sqlJsWorkerPath } = context;
   context.isDbInitialising = false;
-  emitter.emit("dbReady", { sqlDataUrl, sqlJsWorkerPath });
+  emitter.emit<"dbReady">("dbReady", { sqlDataUrl, sqlJsWorkerPath });
 }
 
 function setupDbExec(context: Context) {
@@ -123,11 +123,11 @@ function createDbExec(worker: DbWorker) {
 }
 
 async function execQuery(context: Context, sql: string, queryId: number) {
-  const db = await getInstance(context);
+  const dbExec = await getInstance(context);
   const startedAt = performance.now();
 
   emitQueryStartEvent(context, sql, queryId, startedAt);
-  const res = await db(sql);
+  const res = await dbExec(sql);
   emitQueryCompleteEvents(context, sql, queryId, startedAt, res);
 
   return res;
