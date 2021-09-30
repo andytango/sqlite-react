@@ -4,5 +4,5 @@ module.exports = {
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["jest-extended"],
   modulePathIgnorePatterns: ["/dist"],
-  // silent: true,
+  silent: true,
 };
