@@ -1,33 +1,24 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import React from "react";
 import Worker from "web-worker";
 import { createDb } from "./db";
+import { dbOpts } from "./test-helpers";
 import { DbOpts } from "./types";
-
-const opts: DbOpts = {
-  sqlDataUrl: "src/test-db.sqlite",
-  sqlJsWorkerPath: "src/test-worker.js",
-  getDbFile,
-};
-
-async function getDbFile() {
-  return new ArrayBuffer(0);
-}
 
 describe("createDb", () => {
   it("returns a Provider and hook returning the correct db opts", () => {
     const { Provider, useDbContext } = createDb();
-    const { sqlDataUrl, sqlJsWorkerPath } = opts;
+    const { sqlDataUrl, sqlJsWorkerPath } = dbOpts;
 
-    function TextConsumer() {
+    function TestConsumer() {
       const { sqlDataUrl, sqlJsWorkerPath } = useDbContext();
       return <div>{JSON.stringify({ sqlDataUrl, sqlJsWorkerPath })}</div>;
     }
 
     const { unmount, baseElement } = render(
-      <Provider {...opts}>
-        <TextConsumer />
+      <Provider {...dbOpts}>
+        <TestConsumer />
       </Provider>
     );
 
@@ -45,8 +36,8 @@ describe("createDb", () => {
 
   it("returns a Provider that terminates the worker on unmount", async () => {
     const { Provider } = createDb();
-    const worker = new Worker(opts.sqlJsWorkerPath);
-    const props: DbOpts = { ...opts, worker };
+    const worker = new Worker(dbOpts.sqlJsWorkerPath);
+    const props: DbOpts = { ...dbOpts, worker };
     const fn = jest.spyOn(worker, "terminate");
     const { unmount } = render(<Provider {...props} />);
     unmount();

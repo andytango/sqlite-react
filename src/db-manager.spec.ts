@@ -1,20 +1,10 @@
 import "jest-extended";
 import { createDbManager } from "./db-manager";
-import { DbOpts } from "./types";
-
-const opts: DbOpts = {
-  sqlDataUrl: "src/test-db.sqlite",
-  sqlJsWorkerPath: "src/test-worker.js",
-  getDbFile,
-};
-
-async function getDbFile() {
-  return new ArrayBuffer(0);
-}
+import { dbOpts } from "./test-helpers";
 
 describe("createDbManager", () => {
   it("dispatches db init events", async () => {
-    const dbManager = createDbManager(opts);
+    const dbManager = createDbManager(dbOpts);
     const fn1 = jest.fn();
     const fn2 = jest.fn();
 
@@ -31,7 +21,7 @@ describe("createDbManager", () => {
   });
 
   it("initialises and resolves first promise when ready", async () => {
-    const dbManager = createDbManager(opts);
+    const dbManager = createDbManager(dbOpts);
     const fn1 = jest.fn();
     const fn2 = jest.fn();
     const fn3 = jest.fn();
@@ -48,7 +38,7 @@ describe("createDbManager", () => {
   });
 
   it("enqueues promise resolutions for all callbacks", async () => {
-    const dbManager = createDbManager(opts);
+    const dbManager = createDbManager(dbOpts);
     const fn1 = jest.fn();
     const fn2 = jest.fn();
     const fn3 = jest.fn();
@@ -71,7 +61,7 @@ describe("createDbManager", () => {
   });
 
   it("execs queries", async () => {
-    const dbManager = createDbManager(opts);
+    const dbManager = createDbManager(dbOpts);
     const fn1 = jest.fn();
     const fn2 = jest.fn();
 
@@ -84,15 +74,15 @@ describe("createDbManager", () => {
     expect(fn1).toHaveBeenCalledWith({
       queryId: expect.any(String),
       sql: expect.any(String),
-      sqlDataUrl: opts.sqlDataUrl,
-      sqlJsWorkerPath: opts.sqlJsWorkerPath,
+      sqlDataUrl: dbOpts.sqlDataUrl,
+      sqlJsWorkerPath: dbOpts.sqlJsWorkerPath,
       startedAt: expect.any(Number),
     });
     expect(fn2).toHaveBeenCalledWith({
       queryId: expect.any(String),
       sql: expect.any(String),
-      sqlDataUrl: opts.sqlDataUrl,
-      sqlJsWorkerPath: opts.sqlJsWorkerPath,
+      sqlDataUrl: dbOpts.sqlDataUrl,
+      sqlJsWorkerPath: dbOpts.sqlJsWorkerPath,
       startedAt: expect.any(Number),
       completedAt: expect.any(Number),
       results: [{ columns: ["val"], values: [[1]] }],
@@ -102,7 +92,7 @@ describe("createDbManager", () => {
   });
 
   it("loads the supplied database file url", async () => {
-    const dbManager = createDbManager(opts);
+    const dbManager = createDbManager(dbOpts);
     await dbManager.init();
     const res = await dbManager.exec(`select example_col from example_table`);
 

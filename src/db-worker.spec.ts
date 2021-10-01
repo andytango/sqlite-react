@@ -1,18 +1,13 @@
 import Worker from "web-worker";
 import { createDbWorker } from "./db-worker";
-import { DbOpts } from "./types";
-
-const opts: DbOpts = {
-  sqlDataUrl: "",
-  sqlJsWorkerPath: "src/test-worker.js",
-};
+import { dbOpts } from "./test-helpers";
 
 describe("createDbWorker", () => {
   it("adds event listeners to the worker", async () => {
-    const webWorker = new Worker(opts.sqlJsWorkerPath);
+    const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
     const fn = jest.spyOn(webWorker, "addEventListener");
 
-    createDbWorker({ ...opts, worker: webWorker });
+    createDbWorker({ ...dbOpts, worker: webWorker });
 
     expect(fn).toHaveBeenCalledWith("error", expect.any(Function));
 
@@ -20,20 +15,20 @@ describe("createDbWorker", () => {
   });
 
   it("terminates", async () => {
-    const webWorker = new Worker(opts.sqlJsWorkerPath);
+    const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
     const fn = jest.spyOn(webWorker, "terminate");
 
-    createDbWorker({ ...opts, worker: webWorker });
+    createDbWorker({ ...dbOpts, worker: webWorker });
     webWorker.terminate();
     expect(fn).toHaveBeenCalled();
   });
 
   it("executes sql via worker", async () => {
-    const worker = new Worker(opts.sqlJsWorkerPath);
+    const worker = new Worker(dbOpts.sqlJsWorkerPath);
     const fn1 = jest.spyOn(worker, "postMessage");
     const fn2 = jest.spyOn(worker, "addEventListener");
 
-    const dbWorker = createDbWorker({ ...opts, worker });
+    const dbWorker = createDbWorker({ ...dbOpts, worker });
     const res = await dbWorker.exec("select 1 as val");
 
     expect(fn1).toHaveBeenCalledWith({
@@ -50,11 +45,11 @@ describe("createDbWorker", () => {
   });
 
   it("opens sqlite file via worker", async () => {
-    const worker = new Worker(opts.sqlJsWorkerPath);
+    const worker = new Worker(dbOpts.sqlJsWorkerPath);
     const fn1 = jest.spyOn(worker, "postMessage");
     const fn2 = jest.spyOn(worker, "addEventListener");
 
-    const dbWorker = createDbWorker({ ...opts, worker });
+    const dbWorker = createDbWorker({ ...dbOpts, worker });
     const res = await dbWorker.open(new ArrayBuffer(1));
 
     expect(fn1).toHaveBeenCalledWith({
