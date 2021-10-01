@@ -1,6 +1,8 @@
 import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";
+import "jest-extended";
 import React from "react";
+import { setImmediate } from "timers";
 import Worker from "web-worker";
 import { createDb } from "./db";
 import { dbOpts } from "./test-helpers";
@@ -30,11 +32,38 @@ describe("createDb", () => {
     unmount();
   });
 
-  it.todo("returns a Provider that initialises on mount");
+  it("returns a Provider that changes db when new props are received", () => {
+    const { Provider } = createDb();
+    const worker1 = new Worker(dbOpts.sqlJsWorkerPath);
+    const worker2 = new Worker(dbOpts.sqlJsWorkerPath);
+    const fn1 = jest.spyOn(worker1, "postMessage");
+    const fn2 = jest.spyOn(worker2, "postMessage");
 
-  it.todo("returns a Provider that changes db when new props are received");
+    const { rerender, unmount } = render(
+      <Provider {...{ ...dbOpts, worker: worker1 }} />
+    );
 
-  it("returns a Provider that terminates the worker on unmount", async () => {
+    rerender(<Provider {...{ ...dbOpts, worker: worker2 }} />);
+
+    return new Promise<void>((res) => {
+      setImmediate(() => {
+        expect(fn1).toHaveBeenCalledWith({
+          action: "open",
+          buffer: expect.any(ArrayBuffer),
+          id: expect.any(Number),
+        });
+        expect(fn2).toHaveBeenCalledWith({
+          action: "open",
+          buffer: expect.any(ArrayBuffer),
+          id: expect.any(Number),
+        });
+        unmount();
+        res();
+      });
+    });
+  });
+
+  it("returns a Provider that terminates the worker on unmount", () => {
     const { Provider } = createDb();
     const worker = new Worker(dbOpts.sqlJsWorkerPath);
     const props: DbOpts = { ...dbOpts, worker };
@@ -45,5 +74,34 @@ describe("createDb", () => {
     expect(fn).toHaveBeenCalled();
   });
 
-  it.todo("returns a hook that can query the db");
+  it("returns a hook factory to query the db", () => {
+    const { Provider, makeDbQuery } = createDb();
+    const worker = new Worker(dbOpts.sqlJsWorkerPath);
+    const fn1 = jest.spyOn(worker, "postMessage");
+
+    const useQuery = makeDbQuery<[{ val: 1 }]>(() => `select 1 as val`);
+
+    function TestComponent() {
+      const [_, execQuery] = useQuery();
+      return <div></div>;
+    }
+
+    const { unmount } = render(
+      <Provider {...{ ...dbOpts, worker }}>
+        <TestComponent />
+      </Provider>
+    );
+
+    return new Promise<void>((res) => {
+      setImmediate(() => {
+        expect(fn1).toHaveBeenCalledWith({
+          action: "exec",
+          buffer: expect.any(ArrayBuffer),
+          id: expect.any(Number),
+        });
+        unmount();
+        res();
+      });
+    });
+  });
 });

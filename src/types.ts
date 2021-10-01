@@ -31,11 +31,6 @@ export type DbWorker = Worker;
 
 export type DbQueryFormatter = (...a: any[]) => string;
 
-export interface DbQueryState<T> {
-  loading: boolean;
-  results: T[];
-}
-
 export type SetDbQueryState<T> = React.Dispatch<
   React.SetStateAction<DbQueryState<T>>
 >;
@@ -78,15 +73,15 @@ export interface DbContextState {
   sqlJsWorkerPath: string;
 }
 
-export type DbQueries = Record<number, DbQueryState<unknown>>;
-export interface DbQueryState<T> {
+export type DbQueries = Record<number, DbQueryState>;
+export interface DbQueryState<T = unknown> {
   loading: boolean;
-  results: T[];
+  results: T;
   error?: string;
   sql: string;
 }
 
-export type DbAction =
+export type DbAction<T = unknown> =
   | {
       type: "init";
       db: DbManager;
@@ -106,5 +101,5 @@ export type DbAction =
   | {
       type: "query_result";
       queryId: number;
-      results: unknown[];
+      results: T;
     };
