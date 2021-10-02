@@ -1,7 +1,3 @@
-import { EventEmitter } from "@andytango/ts-event-emitter";
-
-export type DbEventEmitter = EventEmitter<DbEventMap>;
-
 export interface DbOpts {
   sqlDataUrl: string;
   sqlJsWorkerPath: string;
@@ -9,7 +5,7 @@ export interface DbOpts {
   getDbFile?: (s: string) => Promise<ArrayBuffer>;
 }
 
-export interface DbManager extends DbEventEmitter {
+export interface DbManager {
   init: () => Promise<void>;
   exec: DbExec;
   terminate: DbWorker["terminate"];
@@ -34,37 +30,6 @@ export type DbQueryFormatter = (...a: any[]) => string;
 export type SetDbQueryState<T> = React.Dispatch<
   React.SetStateAction<DbQueryState<T>>
 >;
-
-export interface DbEvent extends DbOpts {}
-
-interface QueryEvent extends DbOpts {
-  queryId: string;
-  sql: string;
-}
-
-export interface QueryStartEvent extends QueryEvent {
-  startedAt: number;
-}
-
-export interface QueryResultEvent extends QueryEvent {
-  results: DbResult[];
-  startedAt: number;
-  completedAt: number;
-}
-
-export interface QueryErrorEvent extends QueryEvent {
-  error: string;
-  startedAt: number;
-  completedAt: number;
-}
-
-export type DbEventMap = {
-  dbInit: DbEvent;
-  dbReady: DbEvent;
-  queryStart: QueryStartEvent;
-  queryResult: QueryResultEvent;
-  queryError: QueryErrorEvent;
-};
 
 export interface DbContextState {
   db: DbManager;

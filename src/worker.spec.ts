@@ -1,5 +1,5 @@
 import Worker from "web-worker";
-import { createDbWorker } from "./db-worker";
+import { createDbWorker } from "./worker";
 import { dbOpts } from "./test-helpers";
 
 describe("createDbWorker", () => {

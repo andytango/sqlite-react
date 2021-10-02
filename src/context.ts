@@ -1,5 +1,5 @@
 import { createContext, useReducer } from "react";
-import { createDbManager } from "./db-manager";
+import { initDb } from "./init";
 import { reducer } from "./reducer";
 import { DbAction, DbContextState, DbOpts } from "./types";
 
@@ -20,7 +20,7 @@ export function useContextState(props: DbOpts) {
 
 export function createInitialContextState(opts: DbOpts): DbContextState {
   const { sqlDataUrl, sqlJsWorkerPath } = opts;
-  const db = createDbManager(opts);
+  const db = initDb(opts);
 
   db.init();
 
