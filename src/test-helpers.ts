@@ -1,7 +1,6 @@
-import { initDb } from "./init";
+import { DbResponse } from ".";
 import { DbOpts } from "./types";
-import Worker from "web-worker";
-import { createDbWorker } from "./worker";
+import { DbWorker } from "./worker";
 
 export const dbOpts: DbOpts = {
   sqlDataUrl: "src/test-db.sqlite",
@@ -13,15 +12,10 @@ async function getDbFile() {
   return new ArrayBuffer(0);
 }
 
-export function getTestWorker() {
-  return new Worker(dbOpts.sqlJsWorkerPath);
-}
+export function createTestDbWorker(): DbWorker {
+  const exec = jest.fn(() => Promise.resolve({ results: [] } as DbResponse));
+  const open = jest.fn(() => Promise.resolve({} as DbResponse));
+  const terminate = jest.fn(() => null);
 
-export function createTestDbManager() {
-  const worker = getTestWorker();
-  const dbWorker = createDbWorker({ ...dbOpts, worker });
-  const fn = jest.spyOn(worker, "postMessage");
-  const dbInit = () => initDb(dbOpts, dbWorker);
-
-  return { worker, dbInit, fn };
+  return { exec, open, terminate };
 }

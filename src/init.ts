@@ -1,4 +1,4 @@
-import { DbOpts } from "./types";
+import { DbInitQueue, DbOpts } from "./types";
 import { DbWorker } from "./worker";
 
 export async function initDb(opts: DbOpts, worker: DbWorker) {

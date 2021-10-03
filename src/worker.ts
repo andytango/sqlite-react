@@ -2,7 +2,8 @@ import Worker from "web-worker";
 import { DbResponse } from ".";
 import { DbOpts } from "./types";
 
-export type DbWorker = ReturnType<typeof createDbWorker>;
+export type DbWorkerFactory = typeof createDbWorker;
+export type DbWorker = ReturnType<DbWorkerFactory>;
 
 export function createDbWorker(opts: DbOpts) {
   const worker = initWebWorker(opts);
@@ -23,7 +24,7 @@ export function createDbWorker(opts: DbOpts) {
 }
 
 function initWebWorker(opts: DbOpts) {
-  const { worker = new Worker(opts.sqlJsWorkerPath) } = opts;
+  const worker = new Worker(opts.sqlJsWorkerPath);
   addEventListeners(worker);
 
   return worker;

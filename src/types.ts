@@ -1,11 +1,40 @@
-import { DbWorker } from "./worker";
+import { DbWorker, DbWorkerFactory } from "./worker";
 
 export interface DbOpts {
   sqlDataUrl: string;
   sqlJsWorkerPath: string;
-  worker?: Worker;
+  dbWorkerFactory?: DbWorkerFactory;
   getDbFile?: (s: string) => Promise<ArrayBuffer>;
 }
+
+interface QueryEvent extends DbOpts {
+  queryId: string;
+  sql: string;
+}
+
+export interface QueryStartEvent extends QueryEvent {
+  startedAt: number;
+}
+
+export interface QueryResultEvent extends QueryEvent {
+  results: DbResult[];
+  startedAt: number;
+  completedAt: number;
+}
+
+export interface QueryErrorEvent extends QueryEvent {
+  error: string;
+  startedAt: number;
+  completedAt: number;
+}
+
+export type DbEventMap = {
+  dbInit: DbOpts;
+  dbReady: undefined;
+  queryStart: QueryStartEvent;
+  queryResult: QueryResultEvent;
+  queryError: QueryErrorEvent;
+};
 
 export interface DbResponse {
   error?: string;
@@ -26,13 +55,14 @@ export type SetDbQueryState<T> = React.Dispatch<
 >;
 
 export interface DbContextState extends DbOpts {
+  db: DbWorker;
   queries: DbQueries;
-  exec: DbExec;
+  isReady: boolean;
+  isLoading: boolean;
+  initQueue: DbInitQueue;
 }
 
-export type DbInitQueue = DbIinitCallback[];
-
-export type DbIinitCallback = () => void;
+export type DbInitQueue = string[];
 
 export type DbQueries = Record<number, DbQueryState>;
 export interface DbQueryState<T = unknown> {
@@ -44,6 +74,12 @@ export interface DbQueryState<T = unknown> {
 
 export type DbAction<T = unknown> =
   | ({ type: "init" } & DbContextState)
+  | { type: "load" }
+  | { type: "ready" }
+  | {
+      type: "query_enqueue";
+      sql: string;
+    }
   | {
       type: "query_exec";
       queryId: number;

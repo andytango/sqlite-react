@@ -16,24 +16,28 @@ describe("createDbContext", () => {
 });
 
 describe("useContextState", () => {
-  it("initialises with the db manager", () => {
+  it("initialises with empty context", () => {
     const worker = new Worker(dbOpts.sqlJsWorkerPath);
     const props = { ...dbOpts, worker };
-    const fn = jest.spyOn(worker, "postMessage");
 
     function TestComponent() {
       const [state] = useContextState(props);
       return <div>{JSON.stringify(state)}</div>;
     }
 
-    const { unmount } = render(<TestComponent />);
+    const { unmount, baseElement } = render(<TestComponent />);
 
     return new Promise<void>((res) => {
       setImmediate(() => {
-        expect(fn).toHaveBeenCalledWith({
-          id: expect.any(Number),
-          action: "open",
-          buffer: expect.any(ArrayBuffer),
+        expect(JSON.parse(baseElement.textContent || "")).toEqual({
+          db: expect.anything(),
+          initQueue: [],
+          isLoading: false,
+          isReady: false,
+          queries: {},
+          sqlDataUrl: dbOpts.sqlDataUrl,
+          sqlJsWorkerPath: dbOpts.sqlJsWorkerPath,
+          worker: expect.anything(),
         });
         unmount();
         res();
