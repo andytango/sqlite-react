@@ -6,13 +6,8 @@ export function reducer(
 ): DbContextState {
   switch (action.type) {
     case "init": {
-      const { db, sqlJsWorkerPath, sqlDataUrl } = action;
-      return {
-        ...state,
-        db,
-        sqlDataUrl,
-        sqlJsWorkerPath,
-      };
+      const { type, ...newState } = action;
+      return newState;
     }
     case "query_exec": {
       const { queryId, sql } = action;
