@@ -5,6 +5,7 @@ export interface DbOpts {
   sqlJsWorkerPath: string;
   dbWorkerFactory?: DbWorkerFactory;
   getDbFile?: (s: string) => Promise<ArrayBuffer>;
+  webWorker?: Worker;
 }
 
 interface QueryEvent extends DbOpts {

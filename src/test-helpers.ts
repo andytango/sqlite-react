@@ -1,10 +1,12 @@
 import { DbResponse } from ".";
 import { DbOpts } from "./types";
-import { DbWorker } from "./worker";
+import { createDbWorker, DbWorker } from "./worker";
+import Worker from "web-worker";
+import { act } from "@testing-library/react";
 
 export const dbOpts: DbOpts = {
-  sqlDataUrl: "src/test-db.sqlite",
-  sqlJsWorkerPath: "src/test-worker.js",
+  sqlDataUrl: "example-db-file-path.sqlite",
+  sqlJsWorkerPath: "src/test-web-worker.js",
   getDbFile,
 };
 
@@ -12,10 +14,17 @@ async function getDbFile() {
   return new ArrayBuffer(0);
 }
 
-export function createTestDbWorker(): DbWorker {
+export function createTestDbWorker() {
+  const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
+  const dbWorker = createDbWorker({ ...dbOpts, webWorker });
+
+  return { dbWorker, webWorker };
+}
+
+export function createMockDbWorker(): DbWorker {
+  const init = jest.fn(() => Promise.resolve<void>(undefined));
   const exec = jest.fn(() => Promise.resolve({ results: [] } as DbResponse));
-  const open = jest.fn(() => Promise.resolve({} as DbResponse));
   const terminate = jest.fn(() => null);
 
-  return { exec, open, terminate };
+  return { init, exec, terminate };
 }

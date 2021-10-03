@@ -8,23 +8,23 @@ export type DbWorker = ReturnType<DbWorkerFactory>;
 export function createDbWorker(opts: DbOpts) {
   const worker = initWebWorker(opts);
 
-  function exec(sql: string) {
-    return performAction(worker, "exec", { sql });
+  async function init() {
+    openDbFile(worker, opts);
   }
 
-  function open(buffer: ArrayBuffer) {
-    return performAction(worker, "open", { buffer });
+  function exec(sql: string) {
+    return performAction(worker, "exec", { sql });
   }
 
   function terminate() {
     worker.terminate();
   }
 
-  return { exec, terminate, open };
+  return { init, exec, terminate };
 }
 
 function initWebWorker(opts: DbOpts) {
-  const worker = new Worker(opts.sqlJsWorkerPath);
+  const worker = opts.webWorker || new Worker(opts.sqlJsWorkerPath);
   addEventListeners(worker);
 
   return worker;
@@ -38,7 +38,24 @@ function handleError(e: ErrorEvent) {
   console.error("[DB-WORKER] Error:", e.error);
 }
 
-function performAction(worker: Worker, action: string, payload: {}) {
+async function openDbFile(worker: Worker, opts: DbOpts) {
+  const { sqlDataUrl, getDbFile = fetchDbFile } = opts;
+  const buffer: ArrayBuffer = await getDbFile(sqlDataUrl);
+  return await performAction(worker, "open", { buffer });
+}
+
+async function fetchDbFile(url: string) {
+  const res = await fetch(url);
+  return res.arrayBuffer();
+}
+
+type WorkerActionPayload = { sql: string } | { buffer: ArrayBuffer };
+
+function performAction(
+  worker: Worker,
+  action: string,
+  payload: WorkerActionPayload
+) {
   const id = getNewMessageId();
   const message = { id, action, ...payload };
 
