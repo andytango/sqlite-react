@@ -1,6 +1,5 @@
 import Worker from "web-worker";
-import { DbResponse } from ".";
-import { DbOpts } from "./types";
+import { DbOpts, DbResponse } from "./types";
 
 export type DbWorkerFactory = typeof createDbWorker;
 export type DbWorker = ReturnType<DbWorkerFactory>;

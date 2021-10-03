@@ -1,13 +1,6 @@
-import React, {
-  createContext,
-  Dispatch,
-  useCallback,
-  useMemo,
-  useReducer,
-} from "react";
-import { DbInitQueue } from ".";
+import React, { createContext, useReducer } from "react";
 import { reducer } from "./reducer";
-import { DbAction, DbContextState, DbOpts } from "./types";
+import { DbAction, DbContextState, DbInitQueue, DbOpts } from "./types";
 import { createDbWorker } from "./worker";
 
 export interface DbContextValue extends DbContextState {

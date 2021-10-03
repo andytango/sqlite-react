@@ -1,8 +1,6 @@
-import { DbResponse } from ".";
-import { DbOpts } from "./types";
-import { createDbWorker, DbWorker } from "./worker";
 import Worker from "web-worker";
-import { act } from "@testing-library/react";
+import { DbOpts, DbResponse } from "./types";
+import { createDbWorker, DbWorker } from "./worker";
 
 export const dbOpts: DbOpts = {
   sqlDataUrl: "example-db-file-path.sqlite",

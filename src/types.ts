@@ -1,3 +1,5 @@
+import { EventEmitter } from "@andytango/ts-event-emitter";
+import { Dispatch } from "react";
 import { DbWorker, DbWorkerFactory } from "./worker";
 
 export interface DbOpts {
@@ -28,6 +30,8 @@ export interface QueryErrorEvent extends QueryEvent {
   startedAt: number;
   completedAt: number;
 }
+
+export type DbEventEmitter = EventEmitter<DbEventMap>;
 
 export type DbEventMap = {
   dbInit: DbOpts;
@@ -72,6 +76,8 @@ export interface DbQueryState<T = unknown> {
   error?: string;
   sql: string;
 }
+
+export type DispatchDbAction = Dispatch<DbAction>;
 
 export type DbAction<T = unknown> =
   | ({ type: "init" } & DbContextState)
