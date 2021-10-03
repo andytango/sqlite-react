@@ -1,6 +1,7 @@
 import { initDb } from "./init";
 import { DbOpts } from "./types";
 import Worker from "web-worker";
+import { createDbWorker } from "./worker";
 
 export const dbOpts: DbOpts = {
   sqlDataUrl: "src/test-db.sqlite",
@@ -18,8 +19,9 @@ export function getTestWorker() {
 
 export function createTestDbManager() {
   const worker = getTestWorker();
+  const dbWorker = createDbWorker({ ...dbOpts, worker });
   const fn = jest.spyOn(worker, "postMessage");
-  const dbInit = () => initDb({ ...dbOpts, worker });
+  const dbInit = () => initDb(dbOpts, dbWorker);
 
   return { worker, dbInit, fn };
 }

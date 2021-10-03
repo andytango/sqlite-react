@@ -1,14 +1,10 @@
+import { DbWorker } from "./worker";
+
 export interface DbOpts {
   sqlDataUrl: string;
   sqlJsWorkerPath: string;
   worker?: Worker;
   getDbFile?: (s: string) => Promise<ArrayBuffer>;
-}
-
-export interface DbManager {
-  init: () => Promise<void>;
-  exec: DbExec;
-  terminate: DbWorker["terminate"];
 }
 
 export interface DbResponse {
@@ -23,20 +19,20 @@ export interface DbResult {
 
 export type DbExec = (sql: string) => Promise<DbResponse>;
 
-export type DbWorker = Worker;
-
 export type DbQueryFormatter = (...a: any[]) => string;
 
 export type SetDbQueryState<T> = React.Dispatch<
   React.SetStateAction<DbQueryState<T>>
 >;
 
-export interface DbContextState {
-  db: DbManager;
+export interface DbContextState extends DbOpts {
   queries: DbQueries;
-  sqlDataUrl: string;
-  sqlJsWorkerPath: string;
+  exec: DbExec;
 }
+
+export type DbInitQueue = DbIinitCallback[];
+
+export type DbIinitCallback = () => void;
 
 export type DbQueries = Record<number, DbQueryState>;
 export interface DbQueryState<T = unknown> {
@@ -47,12 +43,7 @@ export interface DbQueryState<T = unknown> {
 }
 
 export type DbAction<T = unknown> =
-  | {
-      type: "init";
-      db: DbManager;
-      sqlDataUrl: string;
-      sqlJsWorkerPath: string;
-    }
+  | ({ type: "init" } & DbContextState)
   | {
       type: "query_exec";
       queryId: number;
