@@ -1,7 +1,7 @@
 import { createEventEmitter } from "@andytango/ts-event-emitter";
 import React, { useContext } from "react";
 import { createDbContext } from "./context";
-import { useDbState } from "./context-hook";
+import { useDb } from "./db-hook";
 import { createDbQueryHook } from "./query-hook";
 import { DbEventMap, DbOpts, DbQueryFormatter } from "./types";
 
@@ -12,7 +12,7 @@ export function createDb() {
 
   function Provider(props: React.PropsWithChildren<DbOpts>) {
     const { children, ...opts } = props;
-    const contextValue = useDbState(opts, emitter, nextQueryId);
+    const contextValue = useDb(opts);
     return <context.Provider value={contextValue} {...{ children }} />;
   }
 
@@ -34,5 +34,5 @@ export function createDb() {
     return queryIdSeq++;
   }
 
-  return { Provider, makeDbQuery, ...emitter };
+  return { Provider, makeDbQuery, useDbContext, ...emitter };
 }

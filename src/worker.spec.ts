@@ -14,13 +14,24 @@ describe("createDbWorker", () => {
     webWorker.terminate();
   });
 
-  it("terminates", async () => {
+  it("terminates worker", async () => {
     const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
     const fn = jest.spyOn(webWorker, "terminate");
 
-    createDbWorker({ ...dbOpts, webWorker });
-    webWorker.terminate();
+    const dbWorker = createDbWorker({ ...dbOpts, webWorker });
+    await dbWorker.init();
+
+    const promise = dbWorker.exec("select example_col from example_slow_table");
+    await dbWorker.terminate();
+
     expect(fn).toHaveBeenCalled();
+
+    const res = await promise;
+    expect(res).toEqual({ type: "abort", id: expect.any(Number) });
+
+    await expect(dbWorker.exec("some val")).rejects.toEqual(
+      new Error("[DB Worker] Cannot exec, worker was terminated")
+    );
   });
 
   it("executes sql via worker", async () => {
@@ -28,6 +39,7 @@ describe("createDbWorker", () => {
     const fn1 = jest.spyOn(webWorker, "postMessage");
     const fn2 = jest.spyOn(webWorker, "addEventListener");
 
+    await dbWorker.init();
     const res = await dbWorker.exec("select 1 as val");
 
     expect(fn1).toHaveBeenCalledWith({
@@ -38,7 +50,11 @@ describe("createDbWorker", () => {
 
     expect(fn2).toHaveBeenCalledWith("message", expect.any(Function));
 
-    expect(res).toMatchSnapshot();
+    expect(res).toEqual({
+      type: "result",
+      id: expect.any(Number),
+      results: [{ columns: ["val"], values: [[1]] }],
+    });
 
     dbWorker.terminate();
   });
@@ -52,6 +68,27 @@ describe("createDbWorker", () => {
       id: expect.any(Number),
       action: "open",
       buffer: expect.any(ArrayBuffer),
+    });
+
+    dbWorker.terminate();
+  });
+
+  it("queues up queries will initialising", async () => {
+    const { webWorker, dbWorker } = createTestDbWorker();
+    const fn1 = jest.spyOn(webWorker, "postMessage");
+
+    await Promise.all([dbWorker.exec("select 1 as val"), dbWorker.init()]);
+
+    expect(fn1).toHaveBeenNthCalledWith(1, {
+      id: expect.any(Number),
+      action: "open",
+      buffer: expect.any(ArrayBuffer),
+    });
+
+    expect(fn1).toHaveBeenNthCalledWith(2, {
+      id: expect.any(Number),
+      action: "exec",
+      sql: "select 1 as val",
     });
 
     dbWorker.terminate();

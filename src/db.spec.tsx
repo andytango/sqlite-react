@@ -4,7 +4,6 @@ import "jest-extended";
 import React from "react";
 import { setImmediate } from "timers";
 import Worker from "web-worker";
-import { initContext } from "./context";
 import { createDb } from "./db";
 import { dbOpts } from "./test-helpers";
 import { DbOpts } from "./types";
@@ -88,9 +87,9 @@ describe("createDb", () => {
 
   it("returns a Provider that terminates the worker on unmount", () => {
     const { Provider } = createDb();
-    const worker = new Worker(dbOpts.sqlJsWorkerPath);
-    const props: DbOpts = { ...dbOpts, worker };
-    const fn = jest.spyOn(worker, "terminate");
+    const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
+    const props: DbOpts = { ...dbOpts, webWorker };
+    const fn = jest.spyOn(webWorker, "terminate");
     const { unmount } = render(<Provider {...props} />);
     unmount();
 
@@ -99,8 +98,8 @@ describe("createDb", () => {
 
   it.skip("returns a hook factory to query the db", () => {
     const { Provider, makeDbQuery } = createDb();
-    const worker = new Worker(dbOpts.sqlJsWorkerPath);
-    const fn1 = jest.spyOn(worker, "postMessage");
+    const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
+    const fn1 = jest.spyOn(webWorker, "postMessage");
 
     const useQuery = makeDbQuery<[{ val: 1 }]>(() => `select 1 as val`);
 
@@ -110,7 +109,7 @@ describe("createDb", () => {
     }
 
     const { unmount } = render(
-      <Provider {...{ ...dbOpts, worker }}>
+      <Provider {...{ ...dbOpts, webWorker }}>
         <TestComponent />
       </Provider>
     );

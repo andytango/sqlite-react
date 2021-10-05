@@ -4,22 +4,62 @@ import { DbOpts, DbResponse } from "./types";
 export type DbWorkerFactory = typeof createDbWorker;
 export type DbWorker = ReturnType<DbWorkerFactory>;
 
+type DbWorkerState = {
+  worker: Worker;
+  isReady: boolean;
+  initQueue: PendingActions;
+  terminateQueue: PendingActions;
+  didTerminate: boolean;
+};
+
+type PendingActions = (() => Promise<void>)[];
+
 export function createDbWorker(opts: DbOpts) {
-  const worker = initWebWorker(opts);
+  const state = createInitialState(opts);
 
   async function init() {
-    openDbFile(worker, opts);
+    return initDbWithCallbacks(state, opts);
   }
 
-  function exec(sql: string) {
-    return performAction(worker, "exec", { sql });
+  async function exec(sql: string) {
+    if (state.didTerminate) {
+      throw new Error("[DB Worker] Cannot exec, worker was terminated");
+    }
+
+    return execWorker(state, sql);
   }
 
-  function terminate() {
-    worker.terminate();
+  async function terminate() {
+    for (let i = 0; i < state.terminateQueue.length; i++) {
+      await state.terminateQueue[i]();
+    }
+    state.terminateQueue = [];
+    terminateWorker(state);
+    state.didTerminate = true;
   }
 
   return { init, exec, terminate };
+}
+
+function createInitialState(opts: DbOpts) {
+  return {
+    worker: initWebWorker(opts),
+    isReady: false,
+    initQueue: [],
+    didTerminate: false,
+    terminateQueue: [],
+  } as DbWorkerState;
+}
+
+async function initDbWithCallbacks(state: DbWorkerState, opts: DbOpts) {
+  await openDbFile(state, opts);
+
+  for (let i = 0; i < state.initQueue.length; i++) {
+    await state.initQueue[i]();
+  }
+
+  state.isReady = true;
+  state.initQueue = [];
 }
 
 function initWebWorker(opts: DbOpts) {
@@ -37,10 +77,10 @@ function handleError(e: ErrorEvent) {
   console.error("[DB-WORKER] Error:", e.error);
 }
 
-async function openDbFile(worker: Worker, opts: DbOpts) {
+async function openDbFile(state: DbWorkerState, opts: DbOpts) {
   const { sqlDataUrl, getDbFile = fetchDbFile } = opts;
   const buffer: ArrayBuffer = await getDbFile(sqlDataUrl);
-  return await performAction(worker, "open", { buffer });
+  return performAction(state, "open", { buffer });
 }
 
 async function fetchDbFile(url: string) {
@@ -50,38 +90,74 @@ async function fetchDbFile(url: string) {
 
 type WorkerActionPayload = { sql: string } | { buffer: ArrayBuffer };
 
+function execWorker(state: DbWorkerState, sql: string) {
+  if (state.isReady) {
+    return performQueryAction(state, sql);
+  }
+
+  return new Promise<DbResponse>((resolve) => {
+    state.initQueue.push(async () => {
+      const res = await performQueryAction(state, sql);
+      resolve(res);
+    });
+  });
+}
+
+function performQueryAction(state: DbWorkerState, sql: string) {
+  return performAction(state, "exec", { sql });
+}
+
 function performAction(
-  worker: Worker,
+  state: DbWorkerState,
   action: string,
   payload: WorkerActionPayload
 ) {
+  const { worker, terminateQueue } = state;
   const id = getNewMessageId();
   const message = { id, action, ...payload };
 
-  return Promise.race([
-    new Promise((resolve) => {
-      worker.postMessage(message);
+  return new Promise((resolve, reject) => {
+    const handleTerminate = async () => {
+      resolve({ type: "abort", id });
+    };
 
-      const handleResponse = (event: MessageEvent) => {
-        if (event.data.id === id) {
-          worker.removeEventListener("message", handleResponse);
-          resolve(event.data);
-        }
-      };
+    terminateQueue.push(handleTerminate);
 
-      worker.addEventListener("message", handleResponse);
-    }),
-    new Promise<void>((_, rej) => {
-      setTimeout(() => {
-        console.error(`[DB-WORKER] Message timeout`, message);
-        rej();
-      }, 3e3);
-    }),
-  ]) as Promise<DbResponse>;
+    const handleResponse = (event: MessageEvent) => {
+      if (event.data.id === id) {
+        worker.removeEventListener("message", handleResponse);
+        removePendingAction(terminateQueue, handleTerminate);
+        resolve({ type: "result", ...event.data });
+      }
+    };
+
+    worker.addEventListener("message", handleResponse);
+    worker.postMessage(message);
+
+    setTimeout(() => {
+      worker.removeEventListener("message", handleResponse);
+      console.error(`[DB-WORKER] Message timeout`, message);
+      reject({ type: "error", error: "[DB-WORKER] Message timeout", id });
+    }, 30e3);
+  }) as Promise<DbResponse>;
 }
 
 let messageId = 0;
 
+function removePendingAction(
+  pending: PendingActions,
+  action: () => Promise<void>
+) {
+  pending.splice(pending.indexOf(action));
+}
+
 function getNewMessageId() {
   return messageId++;
+}
+
+function terminateWorker(state: DbWorkerState) {
+  const { worker } = state;
+  worker.removeEventListener("error", handleError);
+  worker.terminate();
+  state.didTerminate = true;
 }

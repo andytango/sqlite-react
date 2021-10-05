@@ -2,13 +2,10 @@ import { reducer } from "./reducer";
 import { createMockDbWorker, createTestDbWorker } from "./test-helpers";
 import { DbContextState } from "./types";
 
-function createState() {
+function createState(): DbContextState {
   return {
     db: createMockDbWorker(),
     queries: {},
-    isReady: true,
-    isLoading: false,
-    initQueue: [],
     sqlDataUrl: "",
     sqlJsWorkerPath: "",
   };
@@ -25,36 +22,6 @@ describe("reducer", () => {
     };
 
     expect(reducer(oldState, { type: "init", ...newState })).toEqual(newState);
-  });
-
-  it("reduces load action", () => {
-    const oldState: DbContextState = createState();
-    const newState: DbContextState = { ...oldState, isLoading: true };
-
-    expect(reducer(oldState, { type: "load" })).toEqual(newState);
-  });
-
-  it("reduces ready action", () => {
-    const oldState: DbContextState = createState();
-    const newState: DbContextState = {
-      ...oldState,
-      isReady: true,
-      isLoading: false,
-    };
-
-    expect(reducer(oldState, { type: "ready" })).toEqual(newState);
-  });
-
-  it("reduces query_enqueue", () => {
-    const oldState: DbContextState = createState();
-    const newState: DbContextState = {
-      ...oldState,
-      initQueue: ["select 1 as val"],
-    };
-
-    expect(
-      reducer(oldState, { type: "query_enqueue", sql: "select 1 as val" })
-    ).toEqual(newState);
   });
 
   it("reduces query_exec", () => {

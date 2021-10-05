@@ -1,4 +1,5 @@
 import Worker from "web-worker";
+import { DbResult } from ".";
 import { DbOpts, DbResponse } from "./types";
 import { createDbWorker, DbWorker } from "./worker";
 
@@ -21,8 +22,10 @@ export function createTestDbWorker() {
 
 export function createMockDbWorker(): DbWorker {
   const init = jest.fn(() => Promise.resolve<void>(undefined));
-  const exec = jest.fn(() => Promise.resolve({ results: [] } as DbResponse));
-  const terminate = jest.fn(() => null);
+  const exec = jest.fn(() =>
+    Promise.resolve({ type: "result", results: [] as DbResult[] } as DbResponse)
+  );
+  const terminate = jest.fn(() => Promise.resolve<void>(undefined));
 
   return { init, exec, terminate };
 }

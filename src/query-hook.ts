@@ -1,5 +1,5 @@
 import { DbContextValue } from "./context";
-import { mapResultToObjects } from "./helpers";
+import { mapResultToObjects as mapResultsToObjects } from "./helpers";
 import { DbQueryFormatter, DbResponse, DbAction } from "./types";
 
 export function createDbQueryHook<T extends [...any]>(
@@ -24,36 +24,34 @@ export async function performQuery<T>(
   sql: string,
   queryId: number
 ) {
-  const { dispatch, db, isReady } = dbContext;
+  const { dispatch, db } = dbContext;
 
-  if (isReady) {
-    dispatch({ type: "query_exec", sql, queryId });
-    const res = await db.exec(sql);
-    return dispatch(getActionForDbResponse<T>(queryId, res));
-  }
-
-  dispatch({ type: "query_enqueue", sql });
+  dispatch({ type: "query_exec", sql, queryId });
+  const res = await db.exec(sql);
+  return dispatch(getActionForDbResponse<T>(queryId, res));
 }
 
 function getActionForDbResponse<T>(
   queryId: number,
   response: DbResponse
 ): DbAction<T> {
-  const { results, error } = response;
+  const { type } = response;
 
-  if (error) {
-    return { type: "query_error", queryId, error };
+  switch (type) {
+    case "result": {
+      return {
+        type: "query_result",
+        queryId,
+        results: mapResultsToObjects(response.results) as T,
+      };
+    }
+    case "error": {
+      const { error } = response;
+      return { type: "query_error", queryId, error };
+    }
+    case "abort": {
+      console.error("Query aborted");
+      return { type: "query_error", queryId, error: "Query aborted" };
+    }
   }
-
-  if (results) {
-    return {
-      type: "query_result",
-      queryId,
-      results: mapResultToObjects(results) as T,
-    };
-  }
-
-  console.error(response);
-
-  throw new Error(`Unexpected db response for query id ${queryId}`);
 }

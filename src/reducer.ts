@@ -9,15 +9,6 @@ export function reducer(
       const { type, ...newState } = action;
       return newState;
     }
-    case "load": {
-      return { ...state, isLoading: true };
-    }
-    case "ready": {
-      return { ...state, isReady: true, isLoading: false };
-    }
-    case "query_enqueue": {
-      return { ...state, initQueue: state.initQueue.concat(action.sql) };
-    }
     case "query_exec": {
       const { queryId, sql } = action;
       return {

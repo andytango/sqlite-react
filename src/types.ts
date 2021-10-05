@@ -41,10 +41,10 @@ export type DbEventMap = {
   queryError: QueryErrorEvent;
 };
 
-export interface DbResponse {
-  error?: string;
-  results?: DbResult[];
-}
+export type DbResponse =
+  | { type: "result"; results: DbResult[]; id: number }
+  | { type: "error"; error: string; id: number }
+  | { type: "abort"; id: number };
 
 export interface DbResult {
   columns: string[];
@@ -62,9 +62,6 @@ export type SetDbQueryState<T> = React.Dispatch<
 export interface DbContextState extends DbOpts {
   db: DbWorker;
   queries: DbQueries;
-  isReady: boolean;
-  isLoading: boolean;
-  initQueue: DbInitQueue;
 }
 
 export type DbInitQueue = string[];
@@ -81,12 +78,6 @@ export type DispatchDbAction = Dispatch<DbAction>;
 
 export type DbAction<T = unknown> =
   | ({ type: "init" } & DbContextState)
-  | { type: "load" }
-  | { type: "ready" }
-  | {
-      type: "query_enqueue";
-      sql: string;
-    }
   | {
       type: "query_exec";
       queryId: number;
