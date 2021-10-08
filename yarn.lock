@@ -1567,15 +1567,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@simbathesailor/use-what-changed@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@simbathesailor/use-what-changed@npm:2.0.0"
-  peerDependencies:
-    react: ">=16"
-  checksum: a90e5b7388584749d19b138e0ab50fc69d9af69bee7beaa7616fa287122577f027877e0bd622ec1149057adb2f5bd3f27691dae5723c6a7c93d044bfb96e77ec
-  languageName: node
-  linkType: hard
-
 "@sinonjs/commons@npm:^1.7.0":
   version: 1.8.3
   resolution: "@sinonjs/commons@npm:1.8.3"
@@ -5323,6 +5314,34 @@ fsevents@^2.3.2:
   languageName: node
   linkType: hard
 
+"react-sqlite@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "react-sqlite@workspace:."
+  dependencies:
+    "@andytango/ts-event-emitter": 1.0.4
+    "@babel/preset-env": ^7.15.6
+    "@testing-library/jest-dom": ^5.14.1
+    "@testing-library/react": ^12.1.1
+    "@testing-library/react-hooks": ^7.0.2
+    "@types/jest": ^27.0.2
+    "@types/ramda": ^0.27.44
+    "@types/react": ^17.0.18
+    jest: ^27.2.2
+    jest-extended: ^0.11.5
+    prettier: ^2.3.2
+    ramda: ^0.27.1
+    react: ">15"
+    react-dom: ^17.0.2
+    rimraf: ^3.0.2
+    ts-jest: ^27.0.5
+    typescript: ^4.3.5
+    web-worker: ^1.1.0
+  peerDependencies:
+    react: ">15"
+    sql.js: ^1.6.1
+  languageName: unknown
+  linkType: soft
+
 "react@npm:>15":
   version: 17.0.2
   resolution: "react@npm:17.0.2"
@@ -5795,35 +5814,6 @@ fsevents@^2.3.2:
   checksum: 19d79aec211f09b99ec3099b5b2ae2f6e9cdefe50bc91ac4c69144b6d3928a640bb6ae5b3def70c2e85a2c3d9f5ec2719921e3a59d3ca3ef4b2fd1a4656a0df3
   languageName: node
   linkType: hard
-
-"sqlite-react@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "sqlite-react@workspace:."
-  dependencies:
-    "@andytango/ts-event-emitter": 1.0.4
-    "@babel/preset-env": ^7.15.6
-    "@simbathesailor/use-what-changed": ^2.0.0
-    "@testing-library/jest-dom": ^5.14.1
-    "@testing-library/react": ^12.1.1
-    "@testing-library/react-hooks": ^7.0.2
-    "@types/jest": ^27.0.2
-    "@types/ramda": ^0.27.44
-    "@types/react": ^17.0.18
-    jest: ^27.2.2
-    jest-extended: ^0.11.5
-    prettier: ^2.3.2
-    ramda: ^0.27.1
-    react: ">15"
-    react-dom: ^17.0.2
-    rimraf: ^3.0.2
-    ts-jest: ^27.0.5
-    typescript: ^4.3.5
-    web-worker: ^1.1.0
-  peerDependencies:
-    react: ">15"
-    sql.js: ^1.6.1
-  languageName: unknown
-  linkType: soft
 
 "ssri@npm:^8.0.0, ssri@npm:^8.0.1":
   version: 8.0.1
