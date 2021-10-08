@@ -1,4 +1,3 @@
-export { createDbInstance } from "./db";
-export { makeDbQueryFactory } from "./hooks";
+export { createDb } from "./db";
 export { formatSql } from "./sql";
 export * from "./types";
