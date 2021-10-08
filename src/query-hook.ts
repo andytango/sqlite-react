@@ -1,37 +1,46 @@
+import { DbQueryState, DbResultObjects } from ".";
 import { DbContextValue } from "./context";
-import { mapResultToObjects as mapResultsToObjects } from "./helpers";
-import { DbQueryFormatter, DbResponse, DbAction } from "./types";
+import { mapResultsToObjects as mapResultsToObjects } from "./helpers";
+import { DbAction, DbQueryFormatter, DbResponse, DbResult } from "./types";
 
-export function createDbQueryHook<T extends [...any]>(
+export function createDbQueryHook<T extends DbResultObjects>(
   useDbContext: () => DbContextValue,
   formatter: DbQueryFormatter,
   queryId: number
-) {
-  return (...params: Parameters<typeof formatter>) => {
+): () => [
+  DbQueryState,
+  (...params: Parameters<typeof formatter>) => Promise<void>
+] {
+  return () => {
     const context = useDbContext();
     const dbQueryState = context.queries[queryId] || {
       loading: true,
       results: [],
     };
-    const sql = formatter(...params);
 
-    return [dbQueryState, () => performQuery<T>(context, sql, queryId)];
+    return [
+      dbQueryState,
+      (...params: Parameters<typeof formatter>) =>
+        performQuery<T>(context, formatter, params, queryId),
+    ];
   };
 }
 
-export async function performQuery<T>(
+export async function performQuery<T extends DbResultObjects>(
   dbContext: DbContextValue,
-  sql: string,
+  formatter: DbQueryFormatter,
+  params: Parameters<typeof formatter>,
   queryId: number
 ) {
   const { dispatch, db } = dbContext;
+  const sql = formatter(params);
 
   dispatch({ type: "query_exec", sql, queryId });
   const res = await db.exec(sql);
-  return dispatch(getActionForDbResponse<T>(queryId, res));
+  dispatch(getActionForDbResponse<T>(queryId, res));
 }
 
-function getActionForDbResponse<T>(
+function getActionForDbResponse<T extends DbResultObjects>(
   queryId: number,
   response: DbResponse
 ): DbAction<T> {
@@ -39,14 +48,15 @@ function getActionForDbResponse<T>(
 
   switch (type) {
     case "result": {
+      const { results } = response as { results: DbResult[] };
       return {
         type: "query_result",
         queryId,
-        results: mapResultsToObjects(response.results) as T,
+        results: mapResultsToObjects<T>(results),
       };
     }
     case "error": {
-      const { error } = response;
+      const { error } = response as { error: string };
       return { type: "query_error", queryId, error };
     }
     case "abort": {
