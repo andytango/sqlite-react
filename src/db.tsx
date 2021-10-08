@@ -10,9 +10,14 @@ export function createDb() {
   const emitter = createEventEmitter<DbEventMap>();
   let queryIdSeq = 0;
 
-  function Provider(props: React.PropsWithChildren<DbOpts>) {
-    const { children, ...opts } = props;
+  type Props = React.PropsWithChildren<{
+    dbConfig: DbOpts;
+  }>;
+
+  function Provider(props: Props) {
+    const { children, dbConfig: opts } = props;
     const contextValue = useDb(opts);
+
     return <context.Provider value={contextValue} {...{ children }} />;
   }
 
