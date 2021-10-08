@@ -51,6 +51,8 @@ export interface DbResult {
   values: [][];
 }
 
+export type DbResultObjects = Record<string, unknown>[];
+
 export type DbExec = (sql: string) => Promise<DbResponse>;
 
 export type DbQueryFormatter = (...a: any[]) => string;
