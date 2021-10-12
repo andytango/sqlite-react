@@ -6,11 +6,12 @@
   "author": "andytango",
   "license": "MIT",
   "scripts": {
-    "build": "yarn clean && yarn compile",
-    "clean": "touch ./dist/tmp && rimraf ./dist/*",
-    "compile": "tsc",
+    "build": "yarn compile",
+    "compile": "tsc --build --verbose",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "build-test": "yarn test && yarn build",
+    "prepublishOnly": "yarn build-test"
   },
   "peerDependencies": {
     "react": ">15",
@@ -30,7 +31,6 @@
     "prettier": "^2.3.2",
     "react": ">15",
     "react-dom": "^17.0.2",
-    "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
     "typescript": "^4.3.5",
     "web-worker": "^1.1.0"

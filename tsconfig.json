@@ -12,6 +12,13 @@
     "declaration": true,
     "jsx": "react"
   },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "include": [
+    "./src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "src/test-helpers.ts"
+  ]
 }
