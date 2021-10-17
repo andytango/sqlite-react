@@ -9,6 +9,7 @@ type DbWorkerState = {
   isReady: boolean;
   initQueue: PendingActions;
   terminateQueue: PendingActions;
+  isTerminating: boolean;
   didTerminate: boolean;
 };
 
@@ -30,11 +31,21 @@ export function createDbWorker(opts: DbOpts) {
   }
 
   async function terminate() {
+    if (state.isTerminating) {
+      throw new Error("[DB Worker] Already terminating");
+    }
+
+    if (state.didTerminate) {
+      throw new Error("[DB Worker] Already terminated");
+    }
+
+    state.isTerminating = true;
     for (let i = 0; i < state.terminateQueue.length; i++) {
       await state.terminateQueue[i]();
     }
     state.terminateQueue = [];
     terminateWorker(state);
+    state.isTerminating = false;
     state.didTerminate = true;
   }
 
@@ -46,6 +57,7 @@ function createInitialState(opts: DbOpts) {
     worker: initWebWorker(opts),
     isReady: false,
     initQueue: [],
+    isTerminating: false,
     didTerminate: false,
     terminateQueue: [],
   } as DbWorkerState;

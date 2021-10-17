@@ -14,7 +14,7 @@ describe("createDbWorker", () => {
     webWorker.terminate();
   });
 
-  it("terminates worker", async () => {
+  it("terminates worker and aborts queries", async () => {
     const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
     const fn = jest.spyOn(webWorker, "terminate");
 
@@ -31,6 +31,44 @@ describe("createDbWorker", () => {
 
     await expect(dbWorker.exec("some val")).rejects.toEqual(
       new Error("[DB Worker] Cannot exec, worker was terminated")
+    );
+  });
+
+  it("throws error if terminate called while already terminating", async () => {
+    const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
+
+    const dbWorker = createDbWorker({ ...dbOpts, webWorker });
+    await dbWorker.init();
+
+    const promise1 = dbWorker.exec(
+      "select example_col from example_slow_table"
+    );
+    const promise2 = dbWorker.terminate();
+
+    expect(dbWorker.terminate()).rejects.toEqual(
+      new Error("[DB Worker] Already terminating")
+    );
+
+    await promise1;
+    await promise2;
+  });
+
+  it("throws error if terminate called after worker has terminated", async () => {
+    const webWorker = new Worker(dbOpts.sqlJsWorkerPath);
+
+    const dbWorker = createDbWorker({ ...dbOpts, webWorker });
+    await dbWorker.init();
+
+    const promise1 = dbWorker.exec(
+      "select example_col from example_slow_table"
+    );
+    const promise2 = dbWorker.terminate();
+
+    await promise1;
+    await promise2;
+
+    expect(dbWorker.terminate()).rejects.toEqual(
+      new Error("[DB Worker] Already terminated")
     );
   });
 
