@@ -1,12 +1,12 @@
 import "@testing-library/jest-dom";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import "jest-extended";
-import React from "react";
+import React, { useEffect } from "react";
 import { createDb } from "./db";
 import { dbOpts } from "./test-helpers";
 
 describe("createDb", () => {
-  it("returns a Provider that uses uses a context with the correct db opts", () => {
+  it("returns a Provider with a context with the correct db opts", () => {
     const { Provider, useDbContext } = createDb();
     const { sqlJsWorkerPath, sqlDataUrl } = dbOpts;
 
@@ -26,5 +26,38 @@ describe("createDb", () => {
     );
 
     unmount();
+  });
+
+  it("returns a hook factory for queries", () => {
+    const { Provider, makeDbQuery } = createDb();
+    const useQuery = makeDbQuery(() => `select 1 as val`);
+
+    const { baseElement } = render(
+      <Provider dbConfig={dbOpts}>
+        <TestConsumer />
+      </Provider>
+    );
+
+    function TestConsumer() {
+      const [result, dispatch] = useQuery();
+      useEffect(() => {
+        dispatch();
+      }, []);
+      return <div>{JSON.stringify(result)}</div>;
+    }
+
+    expect(JSON.parse(baseElement.textContent || "")).toEqual({
+      loading: true,
+      results: [],
+      sql: "select 1 as val",
+    });
+
+    return waitFor(() => {
+      expect(JSON.parse(baseElement.textContent || "")).toEqual({
+        loading: false,
+        results: [[{ val: 1 }]],
+        sql: "select 1 as val",
+      });
+    });
   });
 });

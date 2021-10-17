@@ -36,6 +36,7 @@ export type DbEventEmitter = EventEmitter<DbEventMap>;
 export type DbEventMap = {
   dbInit: DbOpts;
   dbReady: undefined;
+  dbTerminate: undefined;
   queryStart: QueryStartEvent;
   queryResult: QueryResultEvent;
   queryError: QueryErrorEvent;
