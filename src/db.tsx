@@ -30,7 +30,7 @@ export function createDb() {
   }
 
   function makeDbQuery<T extends [...any]>(formatter: DbQueryFormatter) {
-    return createDbQueryHook<T>(useDbContext, formatter, nextQueryId());
+    return createDbQueryHook<T>(useDbContext, formatter, nextQueryId(), emitter);
   }
 
   function nextQueryId(): number {

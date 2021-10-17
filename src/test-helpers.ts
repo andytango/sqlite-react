@@ -1,6 +1,6 @@
 import Worker from "web-worker";
 import { DbResult } from ".";
-import { DbOpts, DbResponse } from "./types";
+import { DbEventEmitter, DbEventMap, DbOpts, DbResponse } from "./types";
 import { createDbWorker, DbWorker } from "./worker";
 
 export const dbOpts: DbOpts = {
@@ -28,4 +28,13 @@ export function createMockDbWorker(): DbWorker {
   const terminate = jest.fn(() => Promise.resolve<void>(undefined));
 
   return { init, exec, terminate };
+}
+
+export function addMockListener(
+  emitter: DbEventEmitter,
+  event: keyof DbEventMap
+) {
+  const handler = jest.fn();
+  emitter.on(event, handler);
+  return handler;
 }

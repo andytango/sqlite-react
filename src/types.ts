@@ -10,8 +10,8 @@ export interface DbOpts {
   webWorker?: Worker;
 }
 
-interface QueryEvent extends DbOpts {
-  queryId: string;
+export interface QueryEvent extends DbOpts {
+  queryId: number;
   sql: string;
 }
 
@@ -21,7 +21,6 @@ export interface QueryStartEvent extends QueryEvent {
 
 export interface QueryResultEvent extends QueryEvent {
   results: DbResult[];
-  startedAt: number;
   completedAt: number;
 }
 

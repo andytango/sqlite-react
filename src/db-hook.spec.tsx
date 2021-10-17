@@ -3,7 +3,7 @@ import { waitFor } from "@testing-library/dom";
 import { renderHook } from "@testing-library/react-hooks";
 import { DbEventEmitter } from ".";
 import { useDb } from "./db-hook";
-import { dbOpts } from "./test-helpers";
+import { addMockListener, dbOpts } from "./test-helpers";
 import { DbEventMap } from "./types";
 
 describe("useDb", () => {
@@ -88,9 +88,3 @@ describe("useDb", () => {
     expect(onDbTerminate).toHaveBeenCalledTimes(1);
   });
 });
-
-function addMockListener(emitter: DbEventEmitter, event: keyof DbEventMap) {
-  const handler = jest.fn();
-  emitter.on(event, handler);
-  return handler;
-}
